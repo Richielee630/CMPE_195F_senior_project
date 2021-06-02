@@ -1,0 +1,59 @@
+.current-coin-info-wrap{
+    display: flex;
+    justify-content: space-between;
+	
+    /*background-color: #747474;*/
+    /*border-bottom: 1px solid #e7e7e7;*/
+}
+.current-coin-info{
+    width: 100%;
+    /*background-color: #747474;*/
+    /*border-bottom: 1px solid #e7e7e7;*/
+}
+table,table tr th, table tr
+{
+    border:2px solid #434343;
+    text-align: center;
+}
+table tr th{
+    background: #aeaaaa;
+}
+.current-coin-info h4{
+    font-size: .8rem;
+    padding: 1.5rem .5rem;
+}
+.table-my-class {
+    border-collapse:collapse;
+    border: 1px;
+    cellspacing:0;
+    text-align: center;
+    background-color: #aeaaaa;
+}
+
+/*.current-coin-info table th {*/
+/*    font-size: 13px;*/
+/*    padding: 0.9rem 0.7rem !important;*/
+/*    width: 800px;*/
+/*}*/
+.current-coin-info table th, .current-coin-info table td {
+    font-size: 13px;
+    padding: 0.9rem 0.7rem !important;
+}
+.current-coin-info table tbody tr {
+    height: auto;
+}
+.current-coin-info table th{
+    text-align: left;
+    padding-right: 0 !important;
+    /*width: 50%;*/
+}
+.current-coin-info table td {
+    /*我新增得*/
+	/* width:400px; */
+    text-align: right;
+    height: 200px;
+	
+}
+.current-coin-graphic{
+    width: 100%;
+}
