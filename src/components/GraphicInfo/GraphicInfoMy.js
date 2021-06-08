@@ -54,7 +54,7 @@ class GraphicInfoMy extends Component {
         return (
             <div className="graphic-info">
                 <Line
-                    width={690}
+                    width={300}
                     height={170}
                     options={this.state.options}
                     data={{

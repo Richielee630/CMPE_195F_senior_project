@@ -8,3 +8,66 @@
     font-size: 12px;
     padding-bottom: 15px;
 } */
+a{
+    color:rgb(102, 101, 101);
+}
+a:hover{
+    color:rgb(0, 0, 0);
+}
+.logo{
+	background-image: url(../../image/cryptosolution_logo_logo.jpg);
+    width: 91px;
+    height: 89px;
+}
+.logo-box{
+    display: flex;
+    flex-direction: row;
+}
+
+.header-bg{
+    background-color: #DAE1E6;
+    font: Verdana;
+    border-radius: 20px;
+    height: 110px;
+}
+.header-title{
+    font-weight: 900;
+    font-size: 34px;
+    padding-left: 20px;
+    line-height: 89px;
+}
+
+.header-menu{
+    display: flex;
+    flex-direction: row;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 89px;
+    text-align: center;
+    justify-content: center;
+    margin-left: 10px;
+}
+.header-menu div{
+    width: 170px;
+    text-align: center;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+.header-menu div:hover{
+    font-weight: 900;
+}
+
+.header-login{
+    display: flex;
+    flex-direction: row;
+    box-sizing: border-box;
+    font-size: 30px;
+    line-height: 89px;
+    margin-left: 100px;
+    cursor: pointer;
+}
+
+.header-login div{
+    width: 120px;
+    text-align: center;
+}
