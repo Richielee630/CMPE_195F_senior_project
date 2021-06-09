@@ -17,6 +17,7 @@ class Login extends React.Component {
             falg:e.target.checked
         })
     }
+
     handleLogin(){
         let username = document.getElementById("username").value
         let password = document.getElementById("password").value
@@ -36,6 +37,9 @@ class Login extends React.Component {
                         message.success(json.message)
                         if(this.state.falg){
                             document.cookie = `username=${username}`
+                            window.location.href = "/"
+                        }else{     
+                            window.localStorage.setItem("username",username)
                             window.location.href = "/"
                         }
                     }

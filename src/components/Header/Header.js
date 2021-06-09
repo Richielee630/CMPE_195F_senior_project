@@ -4,8 +4,8 @@ import './Header.css'
 // import TitleLogo from '../../image/cryptosolution_logo_logo.jpg'
 import { HomeFilled, UserOutlined } from '@ant-design/icons'
 
-class Login extends React.Component{
-    render(){
+class Login extends React.Component {
+    render() {
         return (
             <div className="header-login">
                 <div> <a href="/login">Log in</a></div>
@@ -15,17 +15,17 @@ class Login extends React.Component{
     }
 }
 
-class Logout extends React.Component{
-    constructor(props){
+class Logout extends React.Component {
+    constructor(props) {
         super(props)
         this.handleLogOut = this.handleLogOut.bind(this)
     }
-    handleLogOut(){
-        localStorage.setItem("username","")
-        document.cookie = "username=;expires="+-1
+    handleLogOut() {
+        localStorage.setItem("username", "")
+        document.cookie = "username=;expires=" + -1
         window.location.href = "/"
     }
-    render(){
+    render() {
         return (
             <div className="header-login">
                 <a onClick={this.handleLogOut} href="/">Log Out</a>
@@ -34,16 +34,23 @@ class Logout extends React.Component{
     }
 }
 
-function LoginStyle(){
-    let username = localStorage.getItem("username")
-    if(!username){
-        return <Login />;
-    }
-    return <Logout />;
-}
+// function LoginStyle(){
+//     let username = localStorage.getItem("username")
+//     alert(this.props.username)
+//     if(!username){
+//         return <Login />;
+//     }
+//     return <Logout />;
+// }
 
-const Header = () => {
-    
+
+function Header(props) {
+    let LoginStyle = null
+    if (props.user) {
+        LoginStyle = <Logout />
+    } else {
+        LoginStyle = <Login />
+    }
     return (
         <header className={'container header-flex header-bg'}>
             <div className="logo-box">
@@ -54,9 +61,7 @@ const Header = () => {
                     <div><HomeFilled /> <a href="/">Home</a></div>
                     <div><UserOutlined /> <a href="/personal">Personal</a></div>
                 </div>
-                
-                <LoginStyle />
-                
+                {LoginStyle}
             </div>
         </header>
     );

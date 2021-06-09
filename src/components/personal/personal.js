@@ -47,20 +47,26 @@ class Personal extends React.Component {
             // a.push(json.data[0].btc)
             // a.push(json.data[0].eth)
             // a.push(json.data[0].ltc)
-            if(json.data[0].btc === "1"){
-                a.push("BTC")
-            }
-            if(json.data[0].eth === "1"){
-                a.push("ETH")
-            }
-            if(json.data[0].ltc === "1"){
-                a.push("LTC")
-            }
-            this.setState({
-                arr:a
-            })
-            if(this.state.arr.length === 0){
-                document.getElementById("mylike").style.display = "none"
+            console.log(json.data)
+            if(json.data[0]){
+                if(json.data[0].btc === "1"){
+                    a.push("BTC")
+                }
+                if(json.data[0].eth === "1"){
+                    a.push("ETH")
+                }
+                if(json.data[0].ltc === "1"){
+                    a.push("LTC")
+                }
+                this.setState({
+                    arr:a
+                })
+                if(this.state.arr.length === 0){
+                    document.getElementById("mylike").style.display = "none"
+                }
+            }else{
+                message.warn("Please Priority collection!")
+                window.location.href = "/"
             }
         })
        

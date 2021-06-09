@@ -84,3 +84,8 @@
     top: -40px;
     width: 100px;
 }
+
+.b-box{
+    height: 450px;
+    overflow-y: scroll;
+}

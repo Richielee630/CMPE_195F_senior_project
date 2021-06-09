@@ -66,7 +66,7 @@ class Comment extends React.Component {
                     <div style={{ height: 15, borderBottom: "2px solid rgb(190, 200, 210)" }}></div>
                     <div className="comment-content-box">
                         <div style={{ width: 15, borderRight: "2px solid rgb(190, 200, 210)", marginTop: -15, height: 650 }}></div>
-                        <div>
+                        <div className="b-box">
                             <div className="comment-title">Comment</div>
                             {
                                 this.state.msg.map((el, index) => {
