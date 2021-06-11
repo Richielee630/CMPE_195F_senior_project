@@ -34,7 +34,7 @@ class Signup extends React.Component {
                     message.warn("Please enter a valid E-mail address!")
                 }
             }else{
-                message.warn("The length of account and password should be at least 9!")    
+                message.warn("The length of username and password should be at least 9!")    
             }
         }else{
             message.warn("Registration information cannot be empty!")
@@ -57,7 +57,7 @@ class Signup extends React.Component {
                 <div className="signup-btn-box">
                     <Button onClick={this.handleRegister} type="primary" style={{width:150}}>Register</Button>
                 </div>
-                <div style={{textAlign:"right",marginTop:8}}><a href="/login">Log in</a></div>
+                <div style={{textAlign:"right",marginTop:5}}><a href="/login">Log in</a></div>
             </div>
         )
     }

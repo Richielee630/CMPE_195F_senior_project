@@ -84,9 +84,9 @@ class Cointable extends Component {
                             </tbody>
                         </table>
                         <div>
-                            <div className="addLike" onClick={this.handleSave}><HeartTwoTone twoToneColor="#eb2f96" /> add to favourite crypto</div>
+                            <div className="addLike" onClick={this.handleSave}><HeartTwoTone twoToneColor="#eb2f96" /> add to favorite crypto</div>
                             <div className="btc">
-                                <div className="btc-title">Trading suggest</div>
+                                <div className="btc-title">Trading Suggest</div>
                                 <div className="btc-content">
                                     {pack}
                                 </div>
