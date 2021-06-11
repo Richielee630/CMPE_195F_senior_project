@@ -128,7 +128,7 @@ class Personal extends React.Component {
                             <LeftOutlined className="personal-left-btn" onClick={this.handleSum}/>
                             <div className="personal-tip">{this.state.arr[this.state.speed]}</div>
                             <RightOutlined className="personal-right-btn" onClick={this.handleAdd}/>
-                            <div className="addLike" style={{marginBottom:0, }} onClick={this.handleDelete}><HeartTwoTone twoToneColor="#eb2f96" /> remove favounite</div>
+                            <div className="addLike" style={{marginBottom:0, }} onClick={this.handleDelete}><HeartTwoTone twoToneColor="#eb2f96" /> remove favourite</div>
                         </div>
                         {mydiv}
                     </TabPane>

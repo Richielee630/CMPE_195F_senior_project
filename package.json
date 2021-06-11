@@ -15,7 +15,7 @@
     "react-chartjs-2": "^2.11.2",
     "react-dom": "^16.14.0",
     "react-moment": "^0.9.7",
-    "react-number-format": "^4.6.0",
+    "react-number-format": "^4.6.3",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.3.0"
   },

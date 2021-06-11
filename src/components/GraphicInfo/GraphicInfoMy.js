@@ -60,7 +60,7 @@ class GraphicInfoMy extends Component {
                     data={{
                         labels: total_in_hours,
                         datasets: [{
-                            label: '$eeeeeee',
+                            label: '$Price',
                             data: total_last_7d,
                             fill: 'none',
                             backgroundColor: 'blue',

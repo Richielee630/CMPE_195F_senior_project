@@ -1,6 +1,6 @@
 .btc{
     border-radius: 10px;
-    border: 5px solid black;
+    border: 3px solid black;
     height: 550px;
     display: flex;
     flex-direction: column;
@@ -10,7 +10,7 @@
 .btc-title{
     font-size: 25px;
     font-weight: 900;
-    border-bottom: 5px solid black;
+    border-bottom: 3px solid black;
     box-sizing: border-box;
     color: black;
 }

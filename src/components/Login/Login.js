@@ -45,10 +45,10 @@ class Login extends React.Component {
                     }
                 })
             }else{
-                message.warn("The length of account password should be at least 9!")    
+                message.warn("The length of account and password should be at least 9!")    
             }
         }else{
-            message.warn("Account password cannot be empty!")
+            message.warn("Account or password cannot be empty!")
         }
         
     }
@@ -62,13 +62,13 @@ class Login extends React.Component {
                 <div>
                     <input id="password" className="login-password" type="password" placeholder={'Password'} />
                 </div>
-                <div style={{marginTop:20}}>
-                    <Checkbox onChange={this.handleChange}>Remember me</Checkbox>
+                <div style={{marginTop:15}}>
+                    <Checkbox onChange={this.handleChange}>Remember me (until closing the browser)</Checkbox>
                 </div>
                 <div className="login-btn-box">
                     <Button type="primary" style={{width:150}} onClick={this.handleLogin}>Log in</Button>
                 </div>
-                <div style={{textAlign:"right",marginTop:5}}><a href="/signup">Register</a></div>
+                <div style={{textAlign:"right",marginTop:8}}><a href="/signup">Register</a></div>
             </div>
         )
     }
