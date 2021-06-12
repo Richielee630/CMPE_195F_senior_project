@@ -1,6 +1,7 @@
 .personal-box{
     width: 1000px;
     margin: 10% auto;
+    margin-top: 90px;
 }
 .personal-title{
     margin-bottom: 50px;
@@ -14,6 +15,7 @@
     height: 50px;
     width: 300px;
     justify-content: space-between;
+    margin-bottom: 15px;
 }
 
 .personal-left-btn, .personal-right-btn{

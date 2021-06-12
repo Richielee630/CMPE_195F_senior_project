@@ -6,7 +6,7 @@ class BTC extends React.Component {
         script.src = "https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js"
         script.innerHTML = `{
 			"interval": "1m",
-			"width": 425,
+			"width": 325,
 			"isTransparent": true,
 			"height": 450,
 			"symbol": "CME:BTCQ2021",

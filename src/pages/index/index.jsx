@@ -20,7 +20,7 @@ class HomeIndex extends React.Component {
       index.style.height = "100%" 
       btn.innerHTML = "Hidden"
     }else{
-      index.style.height = "740px"
+      index.style.height = "740px"   //表单折叠
       btn.innerHTML = "Click me to show all"
     }
   }
@@ -28,7 +28,7 @@ class HomeIndex extends React.Component {
     const { TabPane } = Tabs;
     return (
       <div style={{ marginLeft: 100 }}>
-        <Row id="index-box" type='flex' justify='center' style={{ marginTop: 40, marginRight: 194, height: 740, overflow: "hidden", boxSizing: "border-box" }}>
+        <Row id="index-box" type='flex' justify='center' style={{ marginTop: 25, marginRight: 194, height: 740, overflow: "hidden", boxSizing: "border-box" }}>
           <Col span={24} >
             <Tabs type="card">
               <TabPane tab="Bitcoin" key="1">
@@ -43,7 +43,7 @@ class HomeIndex extends React.Component {
             </Tabs>
           </Col>
         </Row>
-        <div style={{ marginTop:20, padding: 10 }}>
+        <div style={{ marginTop:10, padding: 10, marginLeft:4}}>
           <Button id="btn" type="primary" danger onClick={this.handleSee}>Click me to show all</Button>
         </div>
       </div>

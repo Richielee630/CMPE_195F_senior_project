@@ -1,7 +1,7 @@
 .comment-box{
     background: linear-gradient(to bottom, rgb(190, 227, 248),rgb(236, 246, 250));
     height: 650px;
-    width: 324px;
+    width: 360px;
     color: #000000,#999999;
     font-family: 'Times New Roman', Times, serif;
     border: 1px solid #DAE1E6;
@@ -17,7 +17,7 @@
     font-weight: 900;
     padding: 10px;
     margin: 20px;
-    width: 264px;
+    width: 295px;
     border-bottom:1px solid gray;
 }
 
@@ -33,7 +33,7 @@
     font-weight: 900;
     padding: 20px;
     margin: -18px 20px 20px 20px;
-    width: 264px;
+    width: 295px;
     border-top:1px solid gray;
     display: flex;
     flex-direction: row;
@@ -47,7 +47,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    width: 200px;
+    width: 235px;
 }
 
 .mycomment-time div:nth-child(1){
@@ -68,7 +68,7 @@
     font-size: 14px;
     margin-top: 10px;
 }
-.sendMsg{
+.sendMsg{  /*输入框*/
     margin-top: 10px;
     margin-left: 20px;
 }

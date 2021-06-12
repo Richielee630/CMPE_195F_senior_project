@@ -4,6 +4,7 @@ import './personal.css';
 import BtcDay from '../btcday/btcday';
 import EthDay from '../ethday/ethday';
 import LtcDay from '../ltcday/ltcday';
+import Heatmap from '../heatmap/heatmap';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { HeartTwoTone } from '@ant-design/icons'
 import MyComment from '../mycomment/mycomment'
@@ -135,8 +136,8 @@ class Personal extends React.Component {
                     <TabPane tab="History comments" key="2">
                         <MyComment />
                     </TabPane>
-                    <TabPane tab="TBD" key="3">
-                        Content of Tab 3
+                    <TabPane tab="Coin Heatmap" key="3">
+                        <Heatmap />
                     </TabPane>
                 </Tabs>
             </div>

@@ -68,11 +68,11 @@ table thead tr th:nth-child(1) {
     text-align: left;
 }
 
-.container {
+.container {   /*标签页容器*/
     max-width: 1900px;
     width: 100%;
     margin: 0 auto;
-    background-color: white;
+    background-color: #f8f8f8;
     padding: 15px;
     box-sizing: border-box;
 }
