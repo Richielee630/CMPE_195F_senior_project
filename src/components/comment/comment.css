@@ -85,7 +85,7 @@
     width: 100px;
 }
 
-.b-box{
-    height: 450px;
+.b-box{  /*滚动窗口*/
+    height: 498px;
     overflow-y: scroll;
 }

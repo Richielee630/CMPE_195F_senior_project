@@ -47,7 +47,10 @@ class Cointable extends Component {
     }
     render() {
         const {exchange_ist,bnbexchange_ist} = this.state;
-        const { type } = this.props
+        console.log(exchange_ist)
+    
+        
+        const { type, arr } = this.props
         let pack = null
         if(this.props.type === "BTC"){
             pack = <BTC />
@@ -75,9 +78,11 @@ class Cointable extends Component {
                                         <Coinmy exchanges_name={coin} key={numCoin} type={type}></Coinmy>
                                     )
                                 }):
+                                
                                 exchange_ist.map((coin, numCoin) => {
+                                
                                     return (
-                                        <Coinmy exchanges_name={coin} key={numCoin} type={type}></Coinmy>
+                                        <Coinmy exchanges_name={coin} key={numCoin} aHreF={arr[numCoin]} type={type}></Coinmy>
                                     )
                                 })
                             }

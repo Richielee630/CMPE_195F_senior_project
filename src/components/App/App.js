@@ -9,6 +9,7 @@ import Home from "../../pages/index/index";
 import Login from "../../components/Login/Login";
 import Signup from "../../components/Signup/Signup";
 import Personal from "../../components/personal/personal";
+import Intro from '../../components/introduction/index';
 import '../config/config'
 function App() {
   let my = document.cookie
@@ -34,6 +35,7 @@ function App() {
         <Route path={'/personal'} exact component={Personal} />
         <Route path={'/login'} exact component={Login} />
         <Route path={'/signup'} exact component={Signup} />
+        <Route path={'/intro'} exact component={Intro} />
         {/*<Route path={'/page/:numPage'} exact component={Home}/>*/}
         {/*<Route path={'/coins/:id'} component={Coin}/>*/}
         {/*<Route path={'*'} component={PageNotFound} />*/}

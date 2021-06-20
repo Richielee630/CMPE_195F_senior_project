@@ -59,7 +59,7 @@ class Coinmy extends Component {
                         sparkline_price: sparkline_7d_temp,
                         isLoading: false
                     })
-                    this.timer = setTimeout(this.task_timer, 2000);
+                    this.timer = setTimeout(this.task_timer, 30000);
                 },
                 error => {
                     this.setState({error: REQUEST_FAILED})
@@ -77,6 +77,8 @@ class Coinmy extends Component {
     componentDidMount() {
         this.setState({exchanges_name: this.props.exchanges_name})
         this.timer = setTimeout(this.task_timer, 2000);
+	//	this.timer = setTimeout(() => { resolve(item[1]()); }, item[0]);
+	//	stop() { this.pro = Promise.reject(); clearTimeout(this.timer);
     };
     componentWillUnmount() {
         clearTimeout(this.timer)
@@ -86,12 +88,15 @@ class Coinmy extends Component {
         const {
             base,target,id, price, name, volume, volume_percent, sparkline_price, isLoading
         } = this.state;
+        const {aHreF} = this.props
         if (isLoading){
             return <Loading/>
         }
         return (
                     <tr>
-                        <td className="nameStyle" style={{width:100}}>{name}({base}/{target})</td>
+                        <td className="nameStyle" style={{width:100}}>
+                            <a href={aHreF}>{name}({base}/{target})</a>
+                        </td>
                         <td className="priceStyles">{price}</td>
                         <td className="volumeStyles">{volume}</td>
                         <td className="volumepercentStyles">{volume_percent}%</td>

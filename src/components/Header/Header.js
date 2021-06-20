@@ -57,7 +57,7 @@ function Header(props) {
                 <div className="logo"></div>
                 <div className="header-title">Crypto$olution</div>
                 <div className="header-menu">
-                    <div>Intro</div>
+                    <div> <a href="/intro">Intro</a></div>
                     <div><HomeFilled /> <a href="/">Home</a></div>
                     <div><UserOutlined /> <a href="/personal">Personal</a></div>
                 </div>
