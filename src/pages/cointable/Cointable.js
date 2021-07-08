@@ -11,7 +11,7 @@ import {message} from 'antd'
 class Cointable extends Component {
     state = {
         bnbexchange_ist: ['ftx_spot','bitcoin_com'],
-        exchange_ist: ['ftx_us','ftx_spot','hitbtc','bitcoin_com','bitbox','tokenize','bitfinex','bitstamp','gdax','gemini'],
+        exchange_ist: ['ftx_us','ftx_spot','bitcoin_com','bitbox','tokenize','bitfinex','bitstamp','gdax','gemini'],
         exchange_ist_name: ['FTX.US','Bitfinex','Bitstamp','Gdax,','Gemini'],
         isLoading: true
     };
