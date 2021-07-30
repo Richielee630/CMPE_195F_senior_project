@@ -9,7 +9,7 @@ class BTC extends React.Component {
 			"width": 325,
 			"isTransparent": true,
 			"height": 450,
-			"symbol": "CME:BTCQ2021",
+			"symbol": "COINBASE:BTCUSD",
 			"showIntervalTabs": true,
 			"locale": "en",
 			"colorTheme": "light"
@@ -22,12 +22,8 @@ class BTC extends React.Component {
             <div>
                 <div className="tradingview-widget-container" id="box">
                     <div className="tradingview-widget-container__widget"></div>
-                    <div className="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/CME-BTCQ2021/technicals/"
-                        rel="noopener" target="_blank"><span className="blue-text">Technical Analysis for BTCQ2021</span></a> by
-  TradingView</div>
-
+                    <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/BTCUSD/technicals/" rel="noopener" target="_blank"><span class="blue-text">Technical Analysis for BTCUSD</span></a> by TradingView</div>
                 </div>
-
             </div>
         );
     }
