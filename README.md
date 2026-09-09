@@ -1,4 +1,26 @@
-# CMPE_195F_senior_project
+# Crypto Solution — CMPE 195F senior project
+
+A React dashboard for Bitcoin, Ethereum, and Litecoin exchange prices, charts, and personal favorites.
+
+## Local setup
+
+Use Node 24 LTS (24.15 or newer; see `.nvmrc`).
+
+```sh
+npm ci --ignore-scripts
+npm start
+```
+
+Open http://127.0.0.1:3000 . Run `npm test`, `npm run build`, and `npm audit` to verify the app. Production files are emitted to `dist/`.
+
+See [local run instructions](docs/LOCAL-RUN.md) for using a cached Node 24 without changing system Node. See [security review](docs/SECURITY-REVIEW.md) for the original audit, dependency remediation, and remaining application-level issues.
+
+**This checkout contains only the frontend.** Account, favorite, and comment features need the missing Node backend and MySQL schema referenced below. The dashboard can be browsed locally without them; unavailable comments display a status message.
+
+## Archived 2021 instructions
+
+These historical instructions refer to files not present in this checkout. Use the setup above for the frontend.
+
 * you can find the code under *master* branch
 ## frontend installation guide (Windows):
 * save the code to you local storage

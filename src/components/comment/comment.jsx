@@ -9,7 +9,8 @@ class Comment extends React.Component {
         super(props)
         this.handleSend = this.handleSend.bind(this)
         this.state = {
-            msg: []
+            msg: [],
+            unavailable: false
         }
     }
     handleSend() {
@@ -27,6 +28,8 @@ class Comment extends React.Component {
                 }).then(json => {
                     message.success(json.message)
                     window.location.href = "/"
+                }).catch(() => {
+                    message.error("Comments are unavailable: the backend is not running.")
                 })
             } else {
                 message.warn("Send content cannot be empty!")
@@ -42,6 +45,7 @@ class Comment extends React.Component {
             method: "POST",
             headers: window.headers
         }).then(res => {
+            if (!res.ok) throw new Error("Comments request failed")
             return res.json()
         }).then(json => {
             let marr = []
@@ -54,8 +58,11 @@ class Comment extends React.Component {
                 marr.push(arr)
             }
             this.setState({
-                msg: marr
+                msg: marr,
+                unavailable: false
             })
+        }).catch(() => {
+            this.setState({ unavailable: true })
         })
     }
 
@@ -68,6 +75,9 @@ class Comment extends React.Component {
                         <div style={{ width: 15, borderRight: "2px solid rgb(190, 200, 210)", marginTop: -15, height: 650 }}></div>
                         <div className="b-box">
                             <div className="comment-title">Comment</div>
+                            {this.state.unavailable && (
+                                <p role="status">Comments are unavailable because the backend is not running.</p>
+                            )}
                             {
                                 this.state.msg.map((el, index) => {
                                     return (
@@ -93,10 +103,10 @@ class Comment extends React.Component {
                             <div className="mylast">
                                 <div className="comment-content">
                                     <UserOutlined style={{ width: 50, height: 50, backgroundColor: "white", borderRadius: 100, fontSize: 43, textAlign: "center", border: "1px solid gray", marginLeft: -20 }} />
-                                    <Input placeholder="Type something" className="sendMsg" id="msg" />
+                                    <Input disabled={this.state.unavailable} placeholder="Type something" className="sendMsg" id="msg" />
                                 </div>
                                 <div>
-                                    <Button size="small" className="send-btn" onClick={this.handleSend}>send</Button>
+                                    <Button disabled={this.state.unavailable} size="small" className="send-btn" onClick={this.handleSend}>send</Button>
                                 </div>
                             </div>
 
