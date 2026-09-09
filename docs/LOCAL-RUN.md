@@ -1,32 +1,27 @@
-# Run Crypto Solution locally
+# Local run
 
-Use Node 24 LTS (at least 24.15). `.nvmrc` selects Node 24 if you use nvm.
+Use Node 24.15+ LTS; `.nvmrc` selects Node 24. This app uses React 19, Vite 8, and a Node HTTP API with built-in SQLite. Python/uv is unnecessary.
 
 ```sh
-nvm install
-nvm use
 npm ci --ignore-scripts
 npm start
 ```
 
-If nvm is not installed, install Node 24 LTS or run commands through npm's cached Node package without changing your system Node:
+Open http://127.0.0.1:3000. The frontend proxies `/api` to the backend at 127.0.0.1:8888. The launcher runs both and stops the sibling process if either exits. The old OpenSSL compatibility workaround is not needed.
+
+If system Node is unsupported:
 
 ```sh
 npm exec --yes --package=node@24 -- npm ci --ignore-scripts
 npm exec --yes --package=node@24 -- npm start
 ```
 
-Open http://127.0.0.1:3000 . The server binds only to loopback and fails if the port is occupied. Stop it with Ctrl+C. The former NODE_OPTIONS=--openssl-legacy-provider workaround is no longer needed.
+Configuration: copy `.env.example` to `.env`. The launcher reads it for the backend and Vite reads it for metadata. `COINGECKO_API_KEY` is optional and server-only; `APP_ORIGIN` must match the browser origin exactly. `DATABASE_PATH` defaults to `./data/crypto-solution.sqlite`. `PUBLIC_SITE_URL` sets the absolute share-card URL.
 
-```sh
-npm test
-npm run build
-npm run preview
-npm audit
-```
+For a production build preview, stop `npm start`, run `npm run build`, then run `npm run dev:api` and `npm run preview` in separate terminals. This is still a local preview, not a production deployment.
 
-The production output is `dist/`. Stop the dev server before previewing on the same port. Tests cover dashboard tab switching, login/signup rendering, successful comments loading, HTTP errors, and an unreachable comments backend. External market requests and chart canvas are mocked in tests; browser visual testing was unavailable.
+Market data errors usually indicate upstream rate limiting or service availability. Retry after a short wait or configure a CoinGecko Demo key. A previously successful response may be shown for up to one hour with a cached-data label; no invented fallback prices are provided.
 
-The backend expected at http://127.0.0.1:8888 and the original README's btb.sql schema are absent from this repository and the searched Git history. Login, signup, profiles, favorites, and comments require that backend. Comments display an unavailable state and disable sending when the backend fails. Other backend flows still need restoration and error handling. Live market data and widgets depend on external service availability, rate limits, CORS, and legacy exchange IDs.
+Tests use isolated databases and mocked provider responses, not your real account data. Automated visual browser testing has not been performed. Local HTTP checks verify the health endpoint and live market requests.
 
-See SECURITY-REVIEW.md for current audit results and remaining application-level security issues. A zero dependency audit does not resolve the missing backend or the original credential/session design.
+To back up local data, stop both processes before copying the database and any SQLite sidecar files. Keep backups private; they contain email addresses, password hashes, and personal records. Do not delete the database unless you intend to remove local accounts and saved data.

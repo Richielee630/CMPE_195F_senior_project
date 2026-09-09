@@ -1,6 +1,14 @@
 # Dependency security review — 2026-09-08
 
-## Current remediation status
+## Renewal security status
+
+The renewal replaces the original UI and backend protocol. Runtime dependencies are React 19 and React DOM; legacy React/Ant Design/Chart.js/Axios/Moment are removed. The current audit JSON describes this new tree.
+
+The new backend hashes passwords, transports credentials in JSON bodies, uses expiring HttpOnly opaque sessions, checks request Origin, uses parameterized SQL, limits requests, and enforces ownership on private records. External embedded scripts are removed. UI failures use explicit error states and market prices are never fabricated. Tests cover two-account isolation, persistence, session expiry, rejected origins, invalid holdings, and throttling.
+
+This resolves the original client credential transport and client-controlled identity design by replacing that code. Email verification/recovery, public moderation operations, production deployment hardening, backups and shared rate limits remain pre-launch work. See ARCHITECTURE.md. No complete security assessment is implied by a zero npm audit.
+
+## Historical dependency-remediation checkpoint (before renewal)
 
 The updated lockfile reports **0 vulnerabilities at every severity** in a fresh full `npm audit`. See [current audit](dependency-audit-current.json). A clean `npm ci --ignore-scripts` install, production build, and six component integration tests passed under Node 24.20.0.
 

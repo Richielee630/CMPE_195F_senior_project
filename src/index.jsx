@@ -1,14 +1,5 @@
-import 'antd/dist/antd.css';
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './components/App/App';
-import {BrowserRouter} from "react-router-dom";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./renewal/App";
 
-const app = (
-    <BrowserRouter>
-        <App />
-    </BrowserRouter>
-);
-
-ReactDOM.render(app, document.getElementById('root'));
+createRoot(document.getElementById("root")).render(<App />);

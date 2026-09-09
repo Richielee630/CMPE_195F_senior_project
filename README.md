@@ -1,46 +1,57 @@
-# Crypto Solution — CMPE 195F senior project
+# Crypto Solution
 
-A React dashboard for Bitcoin, Ethereum, and Litecoin exchange prices, charts, and personal favorites.
+A college senior project, rebuilt as a modern crypto research workspace.
 
-## Local setup
+- Live top-50 market overview with search, sorting, and seven-day trends
+- Asset details with 1-day, 1-week, 1-month, and 1-year charts
+- Exchange quote comparisons from CoinGecko
+- Registration and sign-in with durable server-side sessions
+- Personal watchlists and manual portfolio holdings with editing, allocation, and unrealized return
+- Coin-specific community notes with author-owned deletion
+- Responsive Apple-inspired visual design
 
-Use Node 24 LTS (24.15 or newer; see `.nvmrc`).
+## Run locally
+
+Use Node **24 LTS, at least 24.15**. No Python, uv, MySQL, or external database server is needed.
 
 ```sh
+nvm install
+nvm use
 npm ci --ignore-scripts
 npm start
 ```
 
-Open http://127.0.0.1:3000 . Run `npm test`, `npm run build`, and `npm audit` to verify the app. Production files are emitted to `dist/`.
+Without nvm, use npm's cached Node runtime:
 
-See [local run instructions](docs/LOCAL-RUN.md) for using a cached Node 24 without changing system Node. See [security review](docs/SECURITY-REVIEW.md) for the original audit, dependency remediation, and remaining application-level issues.
+```sh
+npm exec --yes --package=node@24 -- npm ci --ignore-scripts
+npm exec --yes --package=node@24 -- npm start
+```
 
-**This checkout contains only the frontend.** Account, favorite, and comment features need the missing Node backend and MySQL schema referenced below. The dashboard can be browsed locally without them; unavailable comments display a status message.
+Open **http://127.0.0.1:3000**. `npm start` runs Vite and the new Node API together. Both bind to loopback. Use this exact origin for cookie-based sign-in. Ctrl+C stops both processes.
 
-## Archived 2021 instructions
+Copy `.env.example` to `.env` if you need a CoinGecko Demo key or a different database file. The API works with keyless public access when available; service errors and cached data are explicitly labeled. Never prefix API secrets with `VITE_`.
 
-These historical instructions refer to files not present in this checkout. Use the setup above for the frontend.
+The backend creates `data/crypto-solution.sqlite` on first start. Accounts and private records persist across restarts. `.env` and database files are ignored by Git. The original backend was missing; this is a newly implemented backend, not a recovered database.
 
-* you can find the code under *master* branch
-## frontend installation guide (Windows):
-* save the code to you local storage
-* open '...\react_frontend' directory in CMD
-* run `npm install` to install the node_modules
-* after install complete, run `npm start` to start the frontend
+## Checks
 
-## backend installation guide (Windows):
-* save the code to you local storage
-* make sure you have [node](https://nodejs.org/en/download/) enviroment installed in your computer
-* open '...\node_backend' directory in CMD
-* run `node app.js` to start the backend
+```sh
+npm test
+npm run build
+npm audit
+```
 
-## database intallation guide (Windows):
-* install [mySQL](https://dev.mysql.com/downloads/file/?id=502540) enviroment
-* run `net start mysql` in CMD to initial local mySQL server, log in to local mySQL server by `mysql -u root -p`, your username and password should be all "root" as you configured in mysql installation
-* install Navicat Premium database GUI (you can use the installation package I provided in this git repo)
-* open Navicat and create a new mySQL connection, use "root" for both username and password
-* right click the mySQL connection you just create, create a new mySQL databass, name it "btb" and chose "utf8 -- UTF8 Unicode" for Character encoding
-* now right click the btb database, and "run SQL file", you can find the SQL configuration file "btb.sql" in this repo
-* after import the database, right click database and refresh it, then you can view them under the "list"
+`npm test` runs UI tests in jsdom and backend tests against isolated SQLite databases. `npm run build` produces `dist/`. For a local production preview, run `npm run dev:api` and `npm run preview` in separate terminals after stopping the normal dev server.
 
-## Now, you should be seeing a functional Web Application in front of you.
+## Documentation
+
+- [Staged renewal plan and status](docs/RENEWAL-PLAN.md)
+- [Architecture, endpoints, and deployment boundaries](docs/ARCHITECTURE.md)
+- [Local run and troubleshooting](docs/LOCAL-RUN.md)
+- [Security review](docs/SECURITY-REVIEW.md)
+- [Design direction and social asset](docs/DESIGN.md)
+
+This is a local review version. A public release still needs verified email/password recovery, moderation operations, durable deployment storage/backups, TLS configuration, and production monitoring. No trading, custody, exchange credentials, or investment recommendations are implemented.
+
+The original 2021 app remains in Git history; `dd7d8e1` is the last restored legacy interface before the renewal.

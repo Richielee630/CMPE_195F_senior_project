@@ -92,3 +92,9 @@ fabric.properties
 .idea/**/markdown-navigator/
 
 /dist
+
+/data/
+.env
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
