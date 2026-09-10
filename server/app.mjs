@@ -31,9 +31,17 @@ async function passwordMatches(password, stored) {
   // Preserve accounts made during the first local preview and upgrade on login.
   const legacy = parts.length === 2;
   const [salt, expected] = legacy ? parts : parts.slice(1);
-  if ((!legacy && parts[0] !== "3") || !/^[a-f0-9]{32}$/.test(salt) || !/^[a-f0-9]{128}$/.test(expected)) return false;
+  if (
+    (!legacy && parts[0] !== "3") ||
+    !/^[a-f0-9]{32}$/.test(salt) ||
+    !/^[a-f0-9]{128}$/.test(expected)
+  )
+    return false;
   const actual = await scrypt(password, salt, 64, {
-    N: 32768, r: 8, p: legacy ? 1 : 3, maxmem: 64 * 1024 * 1024,
+    N: 32768,
+    r: 8,
+    p: legacy ? 1 : 3,
+    maxmem: 64 * 1024 * 1024,
   });
   return timingSafeEqual(actual, Buffer.from(expected, "hex"));
 }
@@ -213,7 +221,10 @@ export function createService({
         );
         if (!account || !matched) fail(401, "Email or password is incorrect.");
         if (!account.password_hash.startsWith("3:")) {
-          db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(await passwordHash(data.password), account.id);
+          db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+            await passwordHash(data.password),
+            account.id,
+          );
         }
         result = signIn(account, headers);
       } else if (path === "/api/auth/logout" && method === "POST") {
@@ -231,7 +242,14 @@ export function createService({
         result = { ok: true };
       } else if (path === "/api/markets" && method === "GET")
         result = await market.markets();
-      else if (
+      else if (path === "/api/quotes" && method === "GET") {
+        const ids = [
+          ...new Set((url.searchParams.get("ids") || "").split(",")),
+        ];
+        if (!ids.length || ids.length > 100 || !ids.every(validCoin))
+          fail(400, "Provide between 1 and 100 valid asset IDs.");
+        result = await market.quotes(ids);
+      } else if (
         /^\/api\/coins\/[^/]+\/(chart|exchanges)$/.test(path) &&
         method === "GET"
       ) {
@@ -373,6 +391,8 @@ export function createService({
       } else fail(404, "Not found.");
       return Response.json(result, { headers });
     } catch (error) {
+      if (error.retryAfter)
+        headers.set("Retry-After", String(error.retryAfter));
       return Response.json(
         {
           error: error.status

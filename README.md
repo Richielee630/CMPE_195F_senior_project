@@ -55,3 +55,7 @@ npm audit
 This is a local review version. A public release still needs verified email/password recovery, moderation operations, durable deployment storage/backups, TLS configuration, and production monitoring. No trading, custody, exchange credentials, or investment recommendations are implemented.
 
 The original 2021 app remains in Git history; `dd7d8e1` is the last restored legacy interface before the renewal.
+
+## Quality checks and navigation
+
+Watchlist and portfolio have direct URLs; asset details can be shared using `?coin=bitcoin`. CI runs tests, builds, and a full npm audit on pushes/PRs and weekly. See [the quality-pass report](docs/QUALITY-PASS.md), including the pending real-browser/mobile checklist.

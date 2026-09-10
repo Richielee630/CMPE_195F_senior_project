@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { request } from "./api";
 import Chart from "./Chart";
+import { useNavigation } from "./navigation";
+import { useQuotes } from "./useQuotes";
 import "./style.css";
 
 const money = (n, compact = false) =>
@@ -57,24 +59,28 @@ function Notice({ children, onRetry }) {
 }
 
 export default function App() {
-  const [view, setView] = useState("markets");
+  const { view, coin: selectedId, auth, navigate } = useNavigation();
+  const setView = (view) => navigate({ view, coin: null, auth: null });
+  const setSelected = (coin) => navigate({ coin: coin?.id || null });
+  const setAuth = (auth) => navigate({ auth });
   const [market, setMarket] = useState(null),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true);
   const [query, setQuery] = useState(""),
-    [sort, setSort] = useState("rank"),
-    [selected, setSelected] = useState(null);
+    [sort, setSort] = useState("rank");
   const [user, setUser] = useState(null),
-    [auth, setAuth] = useState(null),
     [watchlist, setWatchlist] = useState([]);
   const [feedback, setFeedback] = useState("");
+  const [quoteRevision, setQuoteRevision] = useState(0);
   async function load() {
+    setQuoteRevision(value => value + 1);
     setLoading(true);
     setError("");
     try {
       setMarket(await request("/markets"));
     } catch (e) {
       setError(e.message);
+      setMarket((previous) => (previous ? { ...previous, stale: true } : null));
     } finally {
       setLoading(false);
     }
@@ -83,10 +89,11 @@ export default function App() {
     try {
       const result = await request("/me");
       setUser(result.user);
+      setWatchlist([]);
       if (result.user) setWatchlist((await request("/watchlist")).data);
       else setWatchlist([]);
-    } catch {
-      setUser(null);
+    } catch (error) {
+      setFeedback(error.message);
     }
   }
   useEffect(() => {
@@ -99,6 +106,32 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [feedback]);
   const coins = Array.isArray(market?.data) ? market.data : [];
+  const missingIds =
+    loading && !market
+      ? []
+      : [...watchlist, ...(selectedId ? [selectedId] : [])].filter(
+          (id) => !coins.some((c) => c.id === id),
+        );
+  const extraQuotes = useQuotes(missingIds, quoteRevision);
+  const available = [
+    ...coins,
+    ...(extraQuotes.data || []).filter(
+      (c) => !coins.some((existing) => existing.id === c.id),
+    ),
+  ];
+  const selected = selectedId
+    ? available.find((c) => c.id === selectedId)
+    : null;
+  const watchCoins = watchlist.map(
+    (id) =>
+      available.find((c) => c.id === id) || {
+        id,
+        name: id,
+        symbol: "",
+        current_price: null,
+        market_cap_rank: null,
+      },
+  );
   async function toggleWatch(coin) {
     if (!user) {
       setAuth("login");
@@ -121,7 +154,7 @@ export default function App() {
       setFeedback(e.message);
     }
   }
-  const filtered = coins
+  const filtered = (view === "watchlist" ? watchCoins : coins)
     .filter(
       (c) =>
         (view !== "watchlist" || watchlist.includes(c.id)) &&
@@ -339,13 +372,23 @@ export default function App() {
         )}
         {view === "portfolio" ? (
           <Portfolio
+            key={user?.id || "signed-out"}
             user={user}
             coins={coins}
+            stale={Boolean(market?.stale || error)}
+            revision={quoteRevision}
             onSignIn={() => setAuth("login")}
             notify={setFeedback}
           />
         ) : (
           <section className="market-section">
+            {view === "watchlist" &&
+              (extraQuotes.error || extraQuotes.stale) && (
+                <Notice onRetry={load}>
+                  {extraQuotes.error ||
+                    "Some saved assets are using cached quotes."}
+                </Notice>
+              )}
             <div className="section-heading market-toolbar">
               <div>
                 <h2>
@@ -527,6 +570,16 @@ export default function App() {
             setFeedback("Welcome. Make yourself at home.");
           }}
         />
+      )}
+      {selectedId && !selected && (
+        <Modal title="Asset details" onClose={() => setSelected(null)}>
+          <Notice onRetry={extraQuotes.loading ? undefined : load}>
+            {extraQuotes.loading || loading
+              ? "Loading asset…"
+              : extraQuotes.error ||
+                "This asset is unavailable. It may no longer be listed by the data provider."}
+          </Notice>
+        </Modal>
       )}
       {selected && (
         <CoinDetail
@@ -936,7 +989,7 @@ function Notes({ coin, user, onSignIn, notify }) {
     </section>
   );
 }
-function Portfolio({ user, coins, onSignIn, notify }) {
+function Portfolio({ user, coins, onSignIn, notify, stale, revision }) {
   const [holdings, setHoldings] = useState([]),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -953,6 +1006,11 @@ function Portfolio({ user, coins, onSignIn, notify }) {
     if (user) load();
     else setHoldings([]);
   }, [user]);
+  const missing = holdings
+    .filter((h) => !coins.some((c) => c.id === h.coin_id))
+    .map((h) => h.coin_id);
+  const quotes = useQuotes(user ? missing : [], revision);
+  const portfolioCoins = [...coins, ...(quotes.data || [])];
   if (!user)
     return (
       <Empty
@@ -964,9 +1022,11 @@ function Portfolio({ user, coins, onSignIn, notify }) {
     );
   const rows = holdings.map((h) => ({
     ...h,
-    coin: coins.find((c) => c.id === h.coin_id),
+    coin: portfolioCoins.find((c) => c.id === h.coin_id),
   }));
-  const unpriced = rows.some((h) => !Number.isFinite(h.coin?.current_price));
+  const unpriced =
+    Boolean(stale || quotes.stale || error || quotes.loading) ||
+    rows.some((h) => !Number.isFinite(h.coin?.current_price));
   const value = rows.reduce(
       (s, h) => s + h.quantity * (h.coin?.current_price || 0),
       0,
@@ -979,7 +1039,7 @@ function Portfolio({ user, coins, onSignIn, notify }) {
         <h2>{unpriced ? "—" : money(value)}</h2>
         <p>
           {unpriced ? (
-            "Some quotes are unavailable. Totals are paused."
+            "Quotes are unavailable, stale, or still loading. Totals are paused."
           ) : (
             <>
               {money(value - cost)} unrealized return{" "}
@@ -990,6 +1050,7 @@ function Portfolio({ user, coins, onSignIn, notify }) {
         <small>Manual holdings · USD · excludes fees and realized gains</small>
       </div>
       {error && <Notice onRetry={load}>{error}</Notice>}
+      {quotes.error && <Notice>{quotes.error}</Notice>}
       <div className="portfolio-grid">
         <section className="surface">
           <div className="section-heading">
@@ -1091,7 +1152,7 @@ function Portfolio({ user, coins, onSignIn, notify }) {
                 <option value="" disabled>
                   Choose an asset
                 </option>
-                {coins.map((c) => (
+                {portfolioCoins.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name} ({c.symbol.toUpperCase()})
                   </option>

@@ -168,3 +168,83 @@ it("creates and edits portfolio holdings with server-owned records", async () =>
   fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
   expect(await screen.findByText("3 units · $80.00 average cost")).toBeTruthy();
 });
+
+it("restores a direct asset link and responds to Back/Forward navigation", async () => {
+  setup();
+  window.history.replaceState(null, "", "/watchlist?coin=bitcoin");
+  render(<App />);
+  expect(
+    await screen.findByRole("dialog", { name: "Bitcoin details" }),
+  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+  expect(window.location.pathname).toBe("/watchlist");
+  expect(window.location.search).toBe("");
+  window.history.replaceState(null, "", "/portfolio");
+  fireEvent(window, new PopStateEvent("popstate"));
+  expect(await screen.findByText("Your own point of view.")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Discover" }));
+  expect(window.location.pathname).toBe("/");
+});
+
+it("keeps saved assets outside the top 50 visible and removable when quotes fail", async () => {
+  setup({ signedIn: true });
+  const original = globalThis.fetch;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (path, options) => {
+      if (path === "/api/watchlist")
+        return Response.json({ data: ["old-asset"] });
+      if (path.startsWith("/api/quotes"))
+        return Response.json({ error: "Quotes unavailable" }, { status: 503 });
+      return original(path, options);
+    }),
+  );
+  render(<App />);
+  await screen.findByText("Richie");
+  fireEvent.click(screen.getByRole("button", { name: "Watchlist" }));
+  expect(
+    await screen.findByRole("button", { name: "Remove old-asset" }),
+  ).toBeTruthy();
+  expect(await screen.findByText("Quotes unavailable")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Remove old-asset" }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Remove old-asset" }),
+    ).toBeNull(),
+  );
+});
+
+it("fetches and values a holding outside the market overview", async () => {
+  setup({ signedIn: true });
+  const original = globalThis.fetch;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (path, options) => {
+      if (path === "/api/holdings")
+        return Response.json({
+          data: [
+            { id: "holding", coin_id: "litecoin", quantity: 2, cost_basis: 50 },
+          ],
+        });
+      if (path.startsWith("/api/quotes"))
+        return Response.json({
+          data: [
+            {
+              ...coin,
+              id: "litecoin",
+              name: "Litecoin",
+              symbol: "ltc",
+              current_price: 60,
+            },
+          ],
+          stale: false,
+        });
+      return original(path, options);
+    }),
+  );
+  render(<App />);
+  await screen.findByText("Richie");
+  fireEvent.click(screen.getByRole("button", { name: "Portfolio" }));
+  await screen.findByText("Litecoin");
+  expect(screen.getByRole("heading", { name: "$120.00" })).toBeTruthy();
+});

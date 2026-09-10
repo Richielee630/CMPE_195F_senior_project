@@ -279,3 +279,72 @@ test("market routes validate ranges and forward valid identifiers", async () => 
     db.close();
   }
 });
+
+test("provider throttling honors Retry-After across endpoints and recovers", async () => {
+  let now = 1000,
+    calls = 0;
+  const market = createMarket({
+    now: () => now,
+    fetcher: async () => {
+      calls++;
+      if (calls === 1)
+        return new Response("", {
+          status: 429,
+          headers: { "Retry-After": "120" },
+        });
+      return Response.json([
+        { id: "bitcoin", name: "Bitcoin", symbol: "btc", current_price: 100 },
+      ]);
+    },
+  });
+  await assert.rejects(
+    market.markets(),
+    (error) => error.status === 503 && error.retryAfter === 120,
+  );
+  await assert.rejects(
+    market.quotes(["bitcoin"]),
+    (error) => error.retryAfter === 120,
+  );
+  assert.equal(calls, 1);
+  now += 121_000;
+  assert.equal((await market.markets()).stale, false);
+  assert.equal(calls, 2);
+});
+
+test("network outages cool down repeated requests without inventing quotes", async () => {
+  let calls = 0;
+  const market = createMarket({
+    fetcher: async () => {
+      calls++;
+      throw new Error("offline");
+    },
+  });
+  await assert.rejects(market.markets());
+  await assert.rejects(market.markets());
+  assert.equal(calls, 1);
+});
+
+test("quotes endpoint validates and deduplicates identifiers", async () => {
+  const db = openStore(":memory:");
+  const api = client(
+    createService({ db, market: { quotes: async (ids) => ({ data: ids }) } }),
+  );
+  try {
+    assert.equal((await api("/quotes?ids=")).status, 400);
+    assert.equal((await api("/quotes?ids=bad%2Fpath")).status, 400);
+    assert.deepEqual((await api("/quotes?ids=litecoin,litecoin")).data.data, [
+      "litecoin",
+    ]);
+    assert.equal(
+      (
+        await api(
+          "/quotes?ids=" +
+            Array.from({ length: 101 }, (_, i) => `coin-${i}`).join(","),
+        )
+      ).status,
+      400,
+    );
+  } finally {
+    db.close();
+  }
+});

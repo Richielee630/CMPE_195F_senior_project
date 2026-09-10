@@ -12,6 +12,7 @@ Object.defineProperty(HTMLDialogElement.prototype, "close", {
 });
 afterEach(() => {
   cleanup();
+  window.history.replaceState(null, "", "/");
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });

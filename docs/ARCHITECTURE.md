@@ -50,3 +50,7 @@ The implementation is a local review checkpoint. It is not Cloudflare Worker-com
 Before a public launch: email verification and password recovery provider, abuse/moderation/reporting operations, TLS and origin config, private backups/restore drill, account deletion/export, deployment process, monitoring and shared throttling. Platform-owned authentication can replace local auth when adapting to private Sites. Preserve the current local architecture until the hosting target is chosen.
 
 Password parameters follow an [OWASP scrypt configuration](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html); registration requires 15–128 characters.
+
+## Quality-pass updates
+
+Shareable client routes use History API state plus URL query parameters for asset/account dialogs. `/api/quotes?ids=...` retrieves up to 100 validated asset IDs per request, allowing saved assets and holdings outside the top-50 overview to remain useful. It is public market data and never returns account records. Provider rate-limit cooldowns apply across market endpoints; see [quality-pass notes](QUALITY-PASS.md) for error behavior and validation boundaries.
