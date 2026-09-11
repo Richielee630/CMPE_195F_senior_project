@@ -54,3 +54,7 @@ Password parameters follow an [OWASP scrypt configuration](https://cheatsheetser
 ## Quality-pass updates
 
 Shareable client routes use History API state plus URL query parameters for asset/account dialogs. `/api/quotes?ids=...` retrieves up to 100 validated asset IDs per request, allowing saved assets and holdings outside the top-50 overview to remain useful. It is public market data and never returns account records. Provider rate-limit cooldowns apply across market endpoints; see [quality-pass notes](QUALITY-PASS.md) for error behavior and validation boundaries.
+
+### Holding order
+
+Portfolio handles support pointer dragging (mouse or touch) and Up/Down arrow keys. `PUT /api/holdings/order` accepts `{ "ids": [...] }` containing every holding ID for the signed-in user, exactly once. The server validates ownership and saves the complete order transactionally. SQLite migration 2 adds `sort_order`, preserving existing positions; newly added holdings appear first. The UI restores the previous order if saving fails.

@@ -1260,3 +1260,54 @@ form small {
   background: #0071e3;
   border-radius: 3px;
 }
+
+.holding-info { flex: 1; min-width: 0; }
+.holding .holding-drag {
+  flex: 0 0 36px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #69778b;
+  font-size: 26px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.holding .holding-drag:hover { background: #eef4fc; }
+.holding .holding-drag:active { cursor: grabbing; }
+.holding .holding-drag:disabled { opacity: .35; cursor: default; }
+/* Slots keep hit testing stable while the cards move into their new places. */
+.holding-slot { position: relative; }
+.holding-slot .holding {
+  position: relative;
+  background: #fff;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.holding-slot .holding-lifted {
+  z-index: 10;
+  border-radius: 14px;
+  background: #fafdff;
+  box-shadow: 0 18px 38px #1d35572b, 0 3px 9px #1d35571a, 0 0 0 1px #0071e333;
+  pointer-events: none;
+  user-select: none;
+  transition: box-shadow 180ms ease;
+}
+.holding-slot:has(.holding-lifted)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateY(var(--drop-offset, 0px));
+  transition: transform 180ms ease;
+  pointer-events: none;
+  border-radius: 14px;
+  background: #edf4fc;
+  outline: 1px dashed #b5cae5;
+  outline-offset: -2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .holding-slot .holding,
+  .holding-slot:has(.holding-lifted)::before { transition: none; }
+}

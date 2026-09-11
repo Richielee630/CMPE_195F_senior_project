@@ -348,3 +348,35 @@ test("quotes endpoint validates and deduplicates identifiers", async () => {
     db.close();
   }
 });
+
+test("holding order persists and rejects incomplete, duplicate, and foreign IDs", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "holding-order-"));
+  const filename = join(directory, "test.sqlite");
+  let db = openStore(filename);
+  try {
+    let api = client(createService({ db }));
+    const alice = await api("/auth/register", { method: "POST", data: account(31) });
+    const bob = await api("/auth/register", { method: "POST", data: account(32) });
+    const add = async (cookie) => (await api("/holdings", { method: "POST", cookie,
+      data: { coin_id: "bitcoin", quantity: 1, cost_basis: 20 } })).data.id;
+    const first = await add(alice.cookie), second = await add(alice.cookie), foreign = await add(bob.cookie);
+    // Simulate an existing version-one database before applying the migration.
+    db.exec("ALTER TABLE holdings DROP COLUMN sort_order; PRAGMA user_version = 1;");
+    db.close();
+    db = openStore(filename);
+    api = client(createService({ db }));
+    assert.equal((await api("/holdings", { cookie: alice.cookie })).data.data.length, 2);
+    const order = (ids, cookie = alice.cookie) => api("/holdings/order", { method: "PUT", cookie, data: { ids } });
+    assert.equal((await order([first, second])).status, 200);
+    for (const ids of [[first], [first, first], [first, foreign]])
+      assert.equal((await order(ids)).status, 400);
+    assert.equal((await api("/holdings/order", { method: "PUT", data: { ids: [] } })).status, 401);
+    db.close();
+    db = openStore(filename);
+    api = client(createService({ db }));
+    assert.deepEqual((await api("/holdings", { cookie: alice.cookie })).data.data.map(h => h.id), [first, second]);
+  } finally {
+    db.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

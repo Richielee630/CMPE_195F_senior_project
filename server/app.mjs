@@ -300,7 +300,7 @@ export function createService({
         result = {
           data: db
             .prepare(
-              "SELECT id, coin_id, quantity, cost_basis, created_at FROM holdings WHERE user_id = ? ORDER BY created_at DESC",
+              "SELECT id, coin_id, quantity, cost_basis, created_at FROM holdings WHERE user_id = ? ORDER BY sort_order, created_at DESC, id",
             )
             .all(user.id),
         };
@@ -314,15 +314,35 @@ export function createService({
         )
           fail(400, "Portfolio limit reached.");
         const id = randomUUID();
-        db.prepare("INSERT INTO holdings VALUES (?, ?, ?, ?, ?, ?)").run(
+        db.prepare(`INSERT INTO holdings (id, user_id, coin_id, quantity, cost_basis, created_at, sort_order)
+          VALUES (?, ?, ?, ?, ?, ?, (SELECT COALESCE(MIN(sort_order), 1) - 1 FROM holdings WHERE user_id = ?))`).run(
           id,
           user.id,
           data.coin_id,
           data.quantity,
           data.cost_basis,
           now(),
+          user.id,
         );
         result = { id };
+      } else if (path === "/api/holdings/order" && method === "PUT") {
+        requireUser();
+        const { ids } = await body(req);
+        const owned = db.prepare("SELECT id FROM holdings WHERE user_id = ?").all(user.id);
+        const allowed = new Set(owned.map((h) => h.id));
+        if (!Array.isArray(ids) || ids.length !== owned.length ||
+            new Set(ids).size !== ids.length || ids.some((id) => !allowed.has(id)))
+          fail(400, "Holdings changed. Refresh your portfolio and try again.");
+        db.exec("BEGIN");
+        try {
+          const update = db.prepare("UPDATE holdings SET sort_order = ? WHERE id = ? AND user_id = ?");
+          ids.forEach((id, position) => update.run(position, id, user.id));
+          db.exec("COMMIT");
+        } catch (error) {
+          db.exec("ROLLBACK");
+          throw error;
+        }
+        result = { ok: true };
       } else if (
         /^\/api\/holdings\/[^/]+$/.test(path) &&
         ["DELETE", "PUT"].includes(method)

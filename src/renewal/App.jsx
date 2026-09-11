@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { request } from "./api";
 import Chart from "./Chart";
 import { useNavigation } from "./navigation";
@@ -990,6 +990,33 @@ function Notes({ coin, user, onSignIn, notify }) {
   );
 }
 function Portfolio({ user, coins, onSignIn, notify, stale, revision }) {
+  const drag = useRef(null);
+  const savingOrder = useRef(false);
+  const [orderBusy, setOrderBusy] = useState(false);
+  const [dragVisual, setDragVisual] = useState(null);
+  async function reorder(from, to) {
+    if (savingOrder.current || from === to || to < 0 || to >= holdings.length) return;
+    const previous = holdings;
+    const next = [...holdings];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    savingOrder.current = true;
+    setOrderBusy(true);
+    setHoldings(next);
+    try {
+      await request("/holdings/order", { method: "PUT", body: JSON.stringify({ ids: next.map((h) => h.id) }) });
+      notify("Holding order saved");
+    } catch (e) {
+      setHoldings(previous);
+      notify(e.message);
+    } finally {
+      savingOrder.current = false;
+      setOrderBusy(false);
+    }
+  }
+  function cancelDrag() {
+    drag.current = null;
+    setDragVisual(null);
+  }
   const [holdings, setHoldings] = useState([]),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -1058,9 +1085,67 @@ function Portfolio({ user, coins, onSignIn, notify, stale, revision }) {
             <span>{holdings.length} positions</span>
           </div>
           {rows.length ? (
-            rows.map((h) => (
-              <div className="holding" key={h.id}>
-                <div>
+            rows.map((h, index) => (
+              <div className="holding-slot" key={h.id} data-holding-index={index}
+                style={dragVisual?.from === index ? { "--drop-offset": `${dragVisual.dropOffset || 0}px` } : undefined}>
+              <div
+                className={`holding${dragVisual?.from === index ? " holding-lifted" : ""}`}
+                style={dragVisual ? {
+                  transform: dragVisual.from === index
+                    ? `translate(${dragVisual.dx}px, ${dragVisual.dy}px) scale(1.025)`
+                    : `translateY(${index > dragVisual.from && index <= dragVisual.to ? -dragVisual.height : index < dragVisual.from && index >= dragVisual.to ? dragVisual.height : 0}px)`,
+                } : undefined}
+              >
+                <button
+                  type="button"
+                  className="holding-drag"
+                  aria-label={`Reorder ${h.coin?.name || h.coin_id} holding`}
+                  title="Drag to reorder, or use Up and Down arrow keys"
+                  disabled={orderBusy || busy || rows.length < 2}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") cancelDrag();
+                    if (!drag.current && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+                      e.preventDefault();
+                      reorder(index, index + (e.key === "ArrowUp" ? -1 : 1));
+                    }
+                  }}
+                  onPointerDown={(e) => {
+                    if (e.button !== 0) return;
+                    const rect = e.currentTarget.closest(".holding").getBoundingClientRect();
+                    drag.current = {
+                      from: index, to: index, startX: e.clientX, startY: e.clientY,
+                      height: rect.height, dx: 0, dy: 0,
+                    };
+                    setDragVisual({ ...drag.current });
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                  }}
+                  onPointerMove={(e) => {
+                    if (!drag.current) return;
+                    const row = document.elementFromPoint(e.clientX, e.clientY)?.closest("[data-holding-index]");
+                    if (row && e.currentTarget.closest(".surface").contains(row)) {
+                      const target = Number(row.dataset.holdingIndex);
+                      drag.current.to = target;
+                      const source = e.currentTarget.closest(".holding-slot").getBoundingClientRect();
+                      const destination = row.getBoundingClientRect();
+                      drag.current.dropOffset = target > drag.current.from
+                        ? destination.bottom - source.bottom
+                        : destination.top - source.top;
+                    }
+                    drag.current.dx = e.clientX - drag.current.startX;
+                    drag.current.dy = e.clientY - drag.current.startY;
+                    setDragVisual({ ...drag.current });
+                  }}
+                  onPointerUp={() => {
+                    const current = drag.current;
+                    cancelDrag();
+                    if (current) reorder(current.from, current.to);
+                  }}
+                  onPointerCancel={cancelDrag}
+                  onLostPointerCapture={cancelDrag}
+                >
+                  <span aria-hidden="true">⠿</span>
+                </button>
+                <div className="holding-info">
                   <strong>{h.coin?.name || h.coin_id}</strong>
                   <small>
                     {h.quantity} units · {money(h.cost_basis)} average cost
@@ -1081,13 +1166,15 @@ function Portfolio({ user, coins, onSignIn, notify, stale, revision }) {
                       ? money(h.quantity * h.coin.current_price)
                       : "Quote unavailable"}
                   </strong>
-                  <button className="text-button" onClick={() => setEditing(h)}>
+                  <button className="text-button" disabled={orderBusy} onClick={() => setEditing(h)}>
                     Edit
                   </button>
                   <button
                     className="text-button"
                     aria-label={`Remove ${h.coin?.name || h.coin_id} holding`}
+                    disabled={orderBusy || busy}
                     onClick={async () => {
+                      setBusy(true);
                       try {
                         await request(`/holdings/${h.id}`, {
                           method: "DELETE",
@@ -1096,12 +1183,15 @@ function Portfolio({ user, coins, onSignIn, notify, stale, revision }) {
                         await load();
                       } catch (e) {
                         notify(e.message);
+                      } finally {
+                        setBusy(false);
                       }
                     }}
                   >
                     Remove
                   </button>
                 </div>
+              </div>
               </div>
             ))
           ) : (
@@ -1118,6 +1208,7 @@ function Portfolio({ user, coins, onSignIn, notify, stale, revision }) {
             key={editing?.id || "new"}
             onSubmit={async (e) => {
               e.preventDefault();
+              if (savingOrder.current) return;
               const form = e.currentTarget;
               setBusy(true);
               const body = Object.fromEntries(new FormData(form));
@@ -1185,7 +1276,7 @@ function Portfolio({ user, coins, onSignIn, notify, stale, revision }) {
                 placeholder="0.00"
               />
             </label>
-            <button className="pill blue full" disabled={busy || !coins.length}>
+            <button className="pill blue full" disabled={busy || orderBusy || !coins.length}>
               {busy ? "Saving…" : editing ? "Save changes" : "Add holding"}
             </button>
             {editing && (

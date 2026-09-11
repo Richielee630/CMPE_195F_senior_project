@@ -143,6 +143,10 @@ it("creates and edits portfolio holdings with server-owned records", async () =>
         holdings = [{ id: "holding-1", ...JSON.parse(options.body) }];
         return Response.json({ ok: true });
       }
+      if (path === "/api/holdings/holding-1" && options.method === "DELETE") {
+        holdings = [];
+        return Response.json({ ok: true });
+      }
       if (path === "/api/holdings") return Response.json({ data: holdings });
       return original(path, options);
     }),
@@ -167,6 +171,9 @@ it("creates and edits portfolio holdings with server-owned records", async () =>
   });
   fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
   expect(await screen.findByText("3 units · $80.00 average cost")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Remove Bitcoin holding" }));
+  await screen.findByText("Start with your first asset.");
+  expect(screen.getByRole("heading", { name: "$0.00" })).toBeTruthy();
 });
 
 it("restores a direct asset link and responds to Back/Forward navigation", async () => {
@@ -247,4 +254,172 @@ it("fetches and values a holding outside the market overview", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Portfolio" }));
   await screen.findByText("Litecoin");
   expect(screen.getByRole("heading", { name: "$120.00" })).toBeTruthy();
+});
+
+it("reorders holdings with keyboard and pointer controls and restores order if saving fails", async () => {
+  setup({ signedIn: true });
+  const original = globalThis.fetch;
+  let failSave = false;
+  const ids = ["first", "second"];
+  vi.stubGlobal("fetch", vi.fn(async (path, options) => {
+    if (path === "/api/holdings") return Response.json({ data: ids.map((id, i) => ({
+      id, coin_id: i ? "ethereum" : "bitcoin", quantity: 1, cost_basis: 10,
+    })) });
+    if (path === "/api/holdings/order") {
+      expect(JSON.parse(options.body).ids).toEqual(failSave ? ids : [...ids].reverse());
+      return Response.json(failSave ? { error: "Could not save order" } : { ok: true }, { status: failSave ? 503 : 200 });
+    }
+    return original(path, options);
+  }));
+  window.history.replaceState({}, "", "/portfolio");
+  render(<App />);
+  const bitcoin = await screen.findByRole("button", { name: "Reorder Bitcoin holding" });
+  const order = () => screen.getAllByRole("button", { name: /^Reorder/ }).map(b => b.getAttribute("aria-label"));
+  fireEvent.keyDown(bitcoin, { key: "ArrowDown" });
+  await screen.findByText("Holding order saved");
+  expect(order()).toEqual(["Reorder Ethereum holding", "Reorder Bitcoin holding"]);
+  failSave = true;
+  vi.stubGlobal("PointerEvent", MouseEvent);
+  bitcoin.setPointerCapture = vi.fn();
+  document.elementFromPoint = vi.fn(() => screen.getByRole("button", { name: "Reorder Ethereum holding" }));
+  fireEvent.pointerDown(bitcoin, { button: 0 });
+  fireEvent.pointerMove(bitcoin, { clientX: 10, clientY: 10 });
+  expect(bitcoin.closest(".holding").classList.contains("holding-lifted")).toBe(true);
+  fireEvent.pointerCancel(bitcoin);
+  expect(bitcoin.closest(".holding").classList.contains("holding-lifted")).toBe(false);
+  expect(order()).toEqual(["Reorder Ethereum holding", "Reorder Bitcoin holding"]);
+  fireEvent.pointerDown(bitcoin, { button: 0, clientX: 0, clientY: 0 });
+  fireEvent.pointerMove(bitcoin, { clientX: 10, clientY: 10 });
+  fireEvent.pointerUp(bitcoin);
+  await screen.findByText("Could not save order");
+  delete document.elementFromPoint;
+  expect(order()).toEqual(["Reorder Ethereum holding", "Reorder Bitcoin holding"]);
+});
+
+it.each(["login", "register"])("completes %s, reports rejected credentials, and signs out", async (mode) => {
+  setup();
+  const original = globalThis.fetch;
+  let signedIn = false, reject = true;
+  vi.stubGlobal("fetch", vi.fn(async (path, options) => {
+    if (path === `/api/auth/${mode}`) {
+      const body = JSON.parse(options.body);
+      expect(body.email).toBe("richie@example.com");
+      if (mode === "register") expect(body.name).toBe("Richie");
+      if (reject) return Response.json({ error: "Please check your credentials" }, { status: 400 });
+      signedIn = true;
+      return Response.json({ ok: true });
+    }
+    if (path === "/api/me") return Response.json({ user: signedIn ? { id: "one", name: "Richie" } : null });
+    if (path === "/api/auth/logout") { signedIn = false; return Response.json({ ok: true }); }
+    return original(path, options);
+  }));
+  window.history.replaceState({}, "", `/?auth=${mode}`);
+  render(<App />);
+  const modal = await screen.findByRole("dialog");
+  fireEvent.change(within(modal).getByLabelText("Email address"), { target: { value: "richie@example.com" } });
+  fireEvent.change(within(modal).getByLabelText("Password"), { target: { value: "a-long-test-password" } });
+  if (mode === "register") fireEvent.change(within(modal).getByLabelText("Your name"), { target: { value: "Richie" } });
+  fireEvent.submit(modal.querySelector("form"));
+  expect(await within(modal).findByRole("alert")).toBeTruthy();
+  reject = false;
+  fireEvent.submit(modal.querySelector("form"));
+  await screen.findByText("Richie");
+  expect(screen.queryByRole("dialog")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+  await screen.findByText("Signed out");
+  expect(screen.queryByText("Richie")).toBeNull();
+});
+
+it("posts plain-text notes and only exposes delete controls for the author", async () => {
+  setup({ signedIn: true });
+  const original = globalThis.fetch;
+  let notes = [{ id: "other", user_id: "two", name: "Other author", created_at: 1, body: "A different perspective" }];
+  const text = "<img src=x onerror=alert(1)>";
+  vi.stubGlobal("fetch", vi.fn(async (path, options) => {
+    if (path === "/api/coins/bitcoin/notes") {
+      if (options.method === "POST") notes.push({ id: "mine", user_id: "one", name: "Richie", created_at: 1, body: JSON.parse(options.body).body });
+      return Response.json({ data: notes });
+    }
+    if (path === "/api/notes/mine") { expect(options.method).toBe("DELETE"); notes = notes.filter(n => n.id !== "mine"); return Response.json({ ok: true }); }
+    return original(path, options);
+  }));
+  render(<App />);
+  await screen.findByText("Richie");
+  fireEvent.click(await screen.findByRole("button", { name: "View Bitcoin" }));
+  await screen.findByText("A different perspective");
+  expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+  fireEvent.change(screen.getByLabelText("Add your perspective"), { target: { value: text } });
+  fireEvent.click(screen.getByRole("button", { name: "Post note" }));
+  const note = await screen.findByText(text);
+  expect(note.querySelector("img")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+  await waitFor(() => expect(screen.queryByText(text)).toBeNull());
+  expect(screen.getByText("A different perspective")).toBeTruthy();
+});
+
+it("shows exchange prices but only links to HTTPS trade URLs", async () => {
+  setup();
+  const original = globalThis.fetch;
+  vi.stubGlobal("fetch", vi.fn(async (path, options) => {
+    if (path.endsWith("/exchanges")) return Response.json({ data: { tickers: [
+      { market: { name: "Safe exchange" }, base: "BTC", target: "USD", converted_last: { usd: 101 }, trade_url: "https://example.com/trade" },
+      { market: { name: "Unsafe exchange" }, base: "BTC", target: "USD", converted_last: { usd: 102 }, trade_url: "javascript:alert(1)" },
+    ] } });
+    return original(path, options);
+  }));
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "View Bitcoin" }));
+  expect((await screen.findByRole("link", { name: "View pair on Safe exchange" })).getAttribute("href")).toBe("https://example.com/trade");
+  expect(screen.queryByRole("link", { name: "View pair on Unsafe exchange" })).toBeNull();
+  expect(screen.getByText("$102.00")).toBeTruthy();
+});
+
+it("recovers market data after a failed request and sorts prices", async () => {
+  setup();
+  const original = globalThis.fetch;
+  let failed = true;
+  vi.stubGlobal("fetch", vi.fn(async (path, options) => {
+    if (path === "/api/markets") {
+      if (failed) return Response.json({ error: "Market temporarily offline" }, { status: 503 });
+      return Response.json({ data: [coin, { ...coin, id: "ethereum", name: "Ethereum", current_price: 200, market_cap_rank: 2 }], updatedAt: Date.now(), stale: false });
+    }
+    return original(path, options);
+  }));
+  render(<App />);
+  await screen.findByText("Market temporarily offline");
+  failed = false;
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await screen.findByRole("button", { name: "View Bitcoin" });
+  fireEvent.change(screen.getByLabelText("Sort assets"), { target: { value: "price" } });
+  expect(screen.getAllByRole("button", { name: /^View (Bitcoin|Ethereum)$/ }).map(b => b.getAttribute("aria-label"))).toEqual(["View Ethereum", "View Bitcoin"]);
+  expect(screen.queryByText("Market temporarily offline")).toBeNull();
+});
+
+it.each(["stale", "missing"])("pauses portfolio totals when quotes are %s", async (state) => {
+  setup({ signedIn: true });
+  const original = globalThis.fetch;
+  vi.stubGlobal("fetch", vi.fn(async (path, options) => {
+    if (path === "/api/holdings") return Response.json({ data: [{ id: "one", coin_id: "litecoin", quantity: 2, cost_basis: 50 }] });
+    if (path.startsWith("/api/quotes")) return Response.json({ data: state === "missing" ? [] : [{ ...coin, id: "litecoin" }], stale: state === "stale" });
+    return original(path, options);
+  }));
+  window.history.replaceState({}, "", "/portfolio");
+  render(<App />);
+  await screen.findByText("2 units · $50.00 average cost");
+  await waitFor(() => expect(globalThis.fetch.mock.calls.some(([path]) => path.startsWith("/api/quotes"))).toBe(true));
+  expect(screen.getByRole("heading", { name: "—" })).toBeTruthy();
+  expect(screen.getByText("Quotes are unavailable, stale, or still loading. Totals are paused.")).toBeTruthy();
+});
+
+it("keeps a failed watchlist save unsaved and reports the error", async () => {
+  setup({ signedIn: true });
+  const original = globalThis.fetch;
+  vi.stubGlobal("fetch", vi.fn(async (path, options) => path === "/api/watchlist/bitcoin"
+    ? Response.json({ error: "Watchlist could not be saved" }, { status: 503 }) : original(path, options)));
+  render(<App />);
+  await screen.findByText("Richie");
+  fireEvent.click(await screen.findByRole("button", { name: "Save Bitcoin" }));
+  await screen.findByText("Watchlist could not be saved");
+  expect(screen.getByRole("button", { name: "Save Bitcoin" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Remove Bitcoin" })).toBeNull();
 });
